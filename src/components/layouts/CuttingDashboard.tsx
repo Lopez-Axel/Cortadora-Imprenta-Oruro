@@ -47,10 +47,10 @@ function CanvasSection({
   const isViewingBest = result?.strategy === bestResult?.strategy
 
   return (
-    <div className={`relative rounded-xl overflow-hidden bg-white border border-border ${
+    <div className={`relative rounded-xl overflow-hidden bg-white border border-slate-200 shadow-lg ${
       maximized ? "w-full h-full" : "w-full"
     }`}>
-      <div className={`flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30`}>
+      <div className={`flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-slate-50`}>
         <div className="flex items-center gap-2 text-sm">
           <Ruler className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">{result?.strategy ?? "—"}</span>
@@ -88,7 +88,7 @@ function CanvasSection({
         </div>
       </div>
 
-      <div className={`flex items-center justify-center ${maximized ? "h-[calc(100%-40px)]" : "min-h-[400px] lg:min-h-[500px]"}`}>
+      <div className={`flex items-center justify-center bg-[#F8FAFC] ${maximized ? "h-[calc(100%-40px)]" : "min-h-[400px] lg:min-h-[500px]"}`}>
         {result && result.placements.length > 0 ? (
           <CuttingCanvas
             result={result}
@@ -104,8 +104,8 @@ function CanvasSection({
       </div>
 
       {!maximized && result && (
-        <div className="flex items-center justify-between gap-2 px-4 py-2 border-t border-border bg-muted/30">
-          <p className="text-xs text-muted-foreground">
+        <div className="flex items-center justify-between gap-2 px-4 py-2 border-t border-slate-200 bg-slate-50">
+          <p className="text-xs text-slate-500">
             {result.strategy} &middot; {result.totalPiecesPlaced} piezas &middot;{" "}
             {result.efficiency.toFixed(1)}% aprovechamiento
           </p>
@@ -131,7 +131,7 @@ function CanvasSection({
       )}
 
       {!isViewingBest && result && !maximized && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-warning/10 border-t border-warning/30 text-xs text-warning-foreground">
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-t border-amber-200 text-xs text-amber-700">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           <span>
             Esta solución tiene {result.efficiency.toFixed(1)}% de aprovechamiento.
@@ -205,29 +205,29 @@ export function CuttingDashboard() {
   return (
     <>
       <div className="flex flex-1">
-        <div className="hidden lg:flex lg:w-80 xl:w-96 flex-col border-r border-border bg-white">
+        <div className="hidden lg:flex lg:w-80 xl:w-96 flex-col border-r border-slate-200 bg-white">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             <SheetForm />
             <PieceForm />
 
             {hasPieces && (
-              <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+              <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Material</span>
+                    <span className="text-slate-500">Material</span>
                     <span className="font-medium tabular-nums">{sheet.width.toString()} × {sheet.height.toString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Área</span>
+                    <span className="text-slate-500">Área</span>
                     <span className="font-medium tabular-nums">{totalArea.toString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Solicitadas</span>
+                    <span className="text-slate-500">Solicitadas</span>
                     <span className="font-medium">{totalPiecesRequested ?? "Máximo posible"}</span>
                   </div>
                   {theoreticalMax > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Máx. teórico</span>
+                      <span className="text-slate-500">Máx. teórico</span>
                       <span className="font-medium tabular-nums">{theoreticalMax} piezas</span>
                     </div>
                   )}
@@ -237,7 +237,7 @@ export function CuttingDashboard() {
                   onClick={reset}
                   variant="ghost"
                   size="sm"
-                  className="w-full gap-2 text-muted-foreground"
+                  className="w-full gap-2 text-slate-500"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
                   Reiniciar
@@ -247,14 +247,14 @@ export function CuttingDashboard() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 bg-[#F8FAFC]">
           {!hasPieces && (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] rounded-2xl border-2 border-dashed border-border bg-white">
-              <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center mb-4">
-                <Ruler className="h-8 w-8 text-primary/40" />
+            <div className="flex flex-col items-center justify-center min-h-[60vh] rounded-2xl border-2 border-dashed border-slate-200 bg-white">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+                <Ruler className="h-8 w-8 text-blue-300" />
               </div>
-              <p className="text-lg font-medium text-foreground">Ingresa las dimensiones para comenzar</p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-lg font-medium text-slate-800">Ingresa las dimensiones para comenzar</p>
+              <p className="text-sm text-slate-500 mt-1">
                 Define el material y las piezas a optimizar
               </p>
             </div>
@@ -293,9 +293,9 @@ export function CuttingDashboard() {
                 handleShare={handleShare}
               />
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+              <div className="flex items-center gap-2 text-xs text-slate-400 px-1">
                 <Info className="h-3.5 w-3.5" />
-                <span>Haz clic en una estrategia para verla en el canvas. La mejor opción tiene borde verde.</span>
+                <span>Haz clic en una estrategia para verla en el canvas.</span>
               </div>
             </>
           )}
@@ -303,31 +303,31 @@ export function CuttingDashboard() {
       </div>
 
       {fullscreen && activeResult && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full h-full max-w-[95vw] max-h-[95vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-[#1E40AF] to-[#3B82F6]">
               <div className="flex items-center gap-2 text-sm">
-                <Ruler className="h-4 w-4 text-muted-foreground" />
-                <span className="font-semibold">{activeResult.strategy}</span>
-                <span className="text-muted-foreground">
+                <Ruler className="h-4 w-4 text-blue-200" />
+                <span className="font-semibold text-white">{activeResult.strategy}</span>
+                <span className="text-blue-200">
                   {sheet.width.toString()} × {sheet.height.toString()}
                 </span>
-                <span className="text-muted-foreground">&middot;</span>
-                <span className="text-muted-foreground">{activeResult.totalPiecesPlaced} piezas</span>
+                <span className="text-blue-200">&middot;</span>
+                <span className="text-blue-200">{activeResult.totalPiecesPlaced} piezas</span>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={handleExport}>
+                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-white hover:bg-white/20" onClick={handleExport}>
                   <Download className="h-3.5 w-3.5" /> PNG
                 </Button>
-                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={handleShare}>
+                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-white hover:bg-white/20" onClick={handleShare}>
                   <Share2 className="h-3.5 w-3.5" /> Compartir
                 </Button>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setFullscreen(false)}>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white hover:bg-white/20" onClick={() => setFullscreen(false)}>
                   <Minimize2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-            <div className="flex-1 flex items-center justify-center p-4">
+            <div className="flex-1 flex items-center justify-center p-4 bg-[#F8FAFC]">
               <CuttingCanvas
                 result={activeResult}
                 sheetWidth={sheet.width}
