@@ -17,7 +17,7 @@ type CuttingState = {
   reset: () => void
 }
 
-const defaultSheet: Sheet = { width: new Decimal(1000), height: new Decimal(700) }
+const defaultSheet: Sheet = { width: new Decimal(100), height: new Decimal(100) }
 
 export const useCuttingStore = create<CuttingState>()((set) => ({
   sheet: defaultSheet,

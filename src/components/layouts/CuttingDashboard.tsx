@@ -12,7 +12,7 @@ import { DashboardMetrics } from "@/components/metrics/MetricsCard"
 import { Button } from "@/components/ui/button"
 import {
   RotateCcw, Bug, Maximize2, Minimize2, Download, Share2,
-  AlertTriangle, Ruler, Info,
+  AlertTriangle, Ruler, Info, Settings, ChevronDown,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -88,7 +88,7 @@ function CanvasSection({
         </div>
       </div>
 
-      <div className={`flex items-center justify-center bg-[#F8FAFC] ${maximized ? "h-[calc(100%-40px)]" : "min-h-[400px] lg:min-h-[500px]"}`}>
+      <div className={`flex items-center justify-center bg-[#F8FAFC] overflow-hidden ${maximized ? "h-[calc(100%-40px)]" : "w-full min-h-[350px] max-h-[500px] lg:min-h-[500px] lg:max-h-none"}`}>
         {result && result.placements.length > 0 ? (
           <CuttingCanvas
             result={result}
@@ -112,7 +112,7 @@ function CanvasSection({
           <div className="flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger
-                render={<Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={handleExport} />}
+                render={<Button variant="ghost" size="sm" className="h-7 max-lg:min-h-11 gap-1 text-xs" onClick={handleExport} />}
               >
                 <Download className="h-3.5 w-3.5" /> PNG
               </TooltipTrigger>
@@ -120,7 +120,7 @@ function CanvasSection({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger
-                render={<Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={handleShare} />}
+                render={<Button variant="ghost" size="sm" className="h-7 max-lg:min-h-11 gap-1 text-xs" onClick={handleShare} />}
               >
                 <Share2 className="h-3.5 w-3.5" /> Compartir
               </TooltipTrigger>
@@ -158,6 +158,7 @@ export function CuttingDashboard() {
   const [showDebug, setShowDebug] = useState(false)
   const [activeStrategy, setActiveStrategy] = useState<string | null>(null)
   const [fullscreen, setFullscreen] = useState(false)
+  const [mobileFormOpen, setMobileFormOpen] = useState(true)
 
   const stageRef = useRef<StageType | null>(null)
 
@@ -204,6 +205,27 @@ export function CuttingDashboard() {
 
   return (
     <>
+      {/* Mobile: collapsible form section */}
+      <div className="lg:hidden border-b border-slate-200 bg-white">
+        <button
+          type="button"
+          onClick={() => setMobileFormOpen(!mobileFormOpen)}
+          className="flex items-center justify-between w-full px-4 py-3 text-sm font-semibold text-slate-800 min-h-11"
+        >
+          <span className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-slate-500" />
+            Configuración del corte
+          </span>
+          <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${mobileFormOpen ? "rotate-180" : ""}`} />
+        </button>
+        {mobileFormOpen && (
+          <div className="px-4 pb-4 space-y-4">
+            <SheetForm />
+            <PieceForm />
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-1">
         <div className="hidden lg:flex lg:w-80 xl:w-96 flex-col border-r border-slate-200 bg-white">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -237,9 +259,9 @@ export function CuttingDashboard() {
                   onClick={reset}
                   variant="ghost"
                   size="sm"
-                  className="w-full gap-2 text-slate-500"
+                  className="w-full gap-2 text-slate-500 min-h-11"
                 >
-                  <RotateCcw className="h-3.5 w-3.5" />
+                  <RotateCcw className="h-4 w-4" />
                   Reiniciar
                 </Button>
               </div>
@@ -247,7 +269,7 @@ export function CuttingDashboard() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 bg-[#F8FAFC]">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6 lg:space-y-4 bg-[#F8FAFC]">
           {!hasPieces && (
             <div className="flex flex-col items-center justify-center min-h-[60vh] rounded-2xl border-2 border-dashed border-slate-200 bg-white">
               <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
@@ -262,23 +284,44 @@ export function CuttingDashboard() {
 
           {hasPieces && allResults.length > 0 && (
             <>
+              {/* Mobile summary */}
+              <div className="lg:hidden space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Material</span>
+                    <span className="font-medium tabular-nums">{sheet.width.toString()} × {sheet.height.toString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Área</span>
+                    <span className="font-medium tabular-nums">{totalArea.toString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Solicitadas</span>
+                    <span className="font-medium">{totalPiecesRequested ?? "Máximo posible"}</span>
+                  </div>
+                  {theoreticalMax > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Máx. teórico</span>
+                      <span className="font-medium tabular-nums">{theoreticalMax} piezas</span>
+                    </div>
+                  )}
+                </div>
+                <Button
+                  onClick={reset}
+                  variant="ghost"
+                  size="sm"
+                  className="w-full gap-2 text-slate-500 min-h-11"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reiniciar
+                </Button>
+              </div>
+
               <DashboardMetrics
                 theoreticalMax={theoreticalMax}
                 bestCount={bestCount}
                 efficiency={bestResult?.efficiency.toFixed(1) ?? "0"}
                 waste={`${bestResult?.wasteArea.toFixed(0) ?? "0"} (${(100 - (bestResult?.efficiency.toNumber() ?? 0)).toFixed(1)}%)`}
-              />
-
-              <div className="lg:hidden p-4 space-y-4 bg-white border-b border-border">
-                <SheetForm />
-                <PieceForm />
-              </div>
-
-              <StrategyComparison
-                results={allResults}
-                bestResult={bestResult}
-                activeStrategy={activeStrategy}
-                onSelect={handleSelectStrategy}
               />
 
               <CanvasSection
@@ -291,6 +334,13 @@ export function CuttingDashboard() {
                 stageRef={stageRef}
                 handleExport={handleExport}
                 handleShare={handleShare}
+              />
+
+              <StrategyComparison
+                results={allResults}
+                bestResult={bestResult}
+                activeStrategy={activeStrategy}
+                onSelect={handleSelectStrategy}
               />
 
               <div className="flex items-center gap-2 text-xs text-slate-400 px-1">
@@ -316,10 +366,10 @@ export function CuttingDashboard() {
                 <span className="text-blue-200">{activeResult.totalPiecesPlaced} piezas</span>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-white hover:bg-white/20" onClick={handleExport}>
+                <Button variant="ghost" size="sm" className="h-7 max-lg:min-h-11 gap-1 text-xs text-white hover:bg-white/20" onClick={handleExport}>
                   <Download className="h-3.5 w-3.5" /> PNG
                 </Button>
-                <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-white hover:bg-white/20" onClick={handleShare}>
+                <Button variant="ghost" size="sm" className="h-7 max-lg:min-h-11 gap-1 text-xs text-white hover:bg-white/20" onClick={handleShare}>
                   <Share2 className="h-3.5 w-3.5" /> Compartir
                 </Button>
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white hover:bg-white/20" onClick={() => setFullscreen(false)}>

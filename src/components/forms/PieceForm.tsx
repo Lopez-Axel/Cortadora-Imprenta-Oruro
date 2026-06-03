@@ -126,6 +126,7 @@ export function PieceForm() {
                 id="piece-width"
                 type="number"
                 step="any"
+                placeholder="Ej: 21.5"
                 {...register("width")}
               />
               {errors.width && (
@@ -138,6 +139,7 @@ export function PieceForm() {
                 id="piece-height"
                 type="number"
                 step="any"
+                placeholder="Ej: 28"
                 {...register("height")}
               />
               {errors.height && (
@@ -155,9 +157,9 @@ export function PieceForm() {
                   setMaxMode(!maxMode)
                   if (!maxMode) setValue("quantity", 0)
                 }}
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                className="h-5 w-5 rounded border-border text-primary focus:ring-primary"
               />
-              <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
+              <Maximize2 className="h-4 w-4 text-muted-foreground" />
               <span>Buscar máximo aprovechamiento</span>
             </label>
           )}
@@ -183,18 +185,18 @@ export function PieceForm() {
                 type="checkbox"
                 defaultChecked
                 {...register("allowRotation")}
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                className="h-5 w-5 rounded border-border text-primary focus:ring-primary"
               />
               Rotación permitida
             </label>
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" variant="secondary" size="sm" className="flex-1">
+            <Button type="submit" variant="secondary" size="sm" className="flex-1 min-h-11">
               {editingPiece ? "Guardar" : "Agregar"}
             </Button>
             {editingPiece && (
-              <Button type="button" variant="ghost" size="sm" onClick={cancelEdit}>
+              <Button type="button" variant="ghost" size="sm" className="min-h-11" onClick={cancelEdit}>
                 Cancelar
               </Button>
             )}
@@ -227,14 +229,14 @@ export function PieceForm() {
                     <button
                       type="button"
                       onClick={() => startEdit(p)}
-                      className="text-muted-foreground hover:text-primary p-1 rounded transition-colors duration-200"
+                      className="text-muted-foreground hover:text-primary p-1.5 min-h-11 min-w-11 rounded transition-colors duration-200"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => removePiece(p.id)}
-                      className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors duration-200"
+                      className="text-muted-foreground hover:text-destructive p-1.5 min-h-11 min-w-11 rounded transition-colors duration-200"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>

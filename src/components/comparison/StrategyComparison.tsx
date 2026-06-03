@@ -30,7 +30,7 @@ export function StrategyComparison({
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
         Estrategias ({results.length})
       </p>
-      <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+      <div className="flex lg:block overflow-x-auto lg:overflow-visible gap-3 lg:space-y-2 pb-3 lg:pb-0 snap-x snap-mandatory scroll-pl-4 -mx-4 lg:mx-0 px-4 lg:px-0">
         {results.map((r, i) => {
           const isBest = bestResult !== null && r.strategy === bestResult.strategy
           const isActive = r.strategy === activeStrategy
@@ -43,7 +43,7 @@ export function StrategyComparison({
               key={r.strategy}
               type="button"
               onClick={() => onSelect(r.strategy)}
-              className={`text-left w-full rounded-xl border p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
+              className={`text-left shrink-0 w-[75vw] lg:w-full snap-center rounded-xl border p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 min-h-11 ${
                 isBest
                   ? "bg-[#ECFDF5] border-[#22C55E] shadow-sm"
                   : isActive

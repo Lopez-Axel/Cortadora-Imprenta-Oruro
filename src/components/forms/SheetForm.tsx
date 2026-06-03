@@ -52,20 +52,20 @@ export function SheetForm() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="width">Ancho</Label>
-              <Input id="width" type="number" step="any" {...register("width")} />
+              <Input id="width" type="number" step="any" placeholder="Ej: 100" {...register("width")} />
               {errors.width && (
                 <p className="text-xs text-destructive">{errors.width.message}</p>
               )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="height">Alto</Label>
-              <Input id="height" type="number" step="any" {...register("height")} />
+              <Input id="height" type="number" step="any" placeholder="Ej: 100" {...register("height")} />
               {errors.height && (
                 <p className="text-xs text-destructive">{errors.height.message}</p>
               )}
             </div>
           </div>
-          <Button type="submit" size="sm" className="w-full">
+          <Button type="submit" size="sm" className="w-full min-h-11">
             Aplicar
           </Button>
         </form>
