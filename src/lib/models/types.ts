@@ -51,6 +51,20 @@ export type FreeRect = {
   height: Decimal
 }
 
+export type CandidateLayout = {
+  strategy: string
+  placements: Placement[]
+  usedArea: Decimal
+  wasteArea: Decimal
+  efficiency: Decimal
+  totalPiecesPlaced: number
+}
+
+export type EngineResult = {
+  theoreticalMax: number
+  candidates: CandidateLayout[]
+}
+
 export const defaultSettings: CuttingSettings = {
   gap: new Decimal(0),
   margin: new Decimal(0),

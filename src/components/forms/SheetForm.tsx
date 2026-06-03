@@ -11,8 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCuttingStore } from "@/lib/store/cutting-store"
 
 const sheetSchema = z.object({
-  width: z.coerce.number().min(1, "El ancho debe ser mayor a 0"),
-  height: z.coerce.number().min(1, "El alto debe ser mayor a 0"),
+  width: z.coerce.number().min(1, "Debe ser mayor a 0"),
+  height: z.coerce.number().min(1, "Debe ser mayor a 0"),
 })
 
 type SheetFormValues = {
@@ -44,26 +44,28 @@ export function SheetForm() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Pliego</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Material</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="width">Ancho (mm)</Label>
-            <Input id="width" type="number" step="any" {...register("width")} />
-            {errors.width && (
-              <p className="text-sm text-destructive">{errors.width.message}</p>
-            )}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="width">Ancho</Label>
+              <Input id="width" type="number" step="any" {...register("width")} />
+              {errors.width && (
+                <p className="text-xs text-destructive">{errors.width.message}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="height">Alto</Label>
+              <Input id="height" type="number" step="any" {...register("height")} />
+              {errors.height && (
+                <p className="text-xs text-destructive">{errors.height.message}</p>
+              )}
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="height">Alto (mm)</Label>
-            <Input id="height" type="number" step="any" {...register("height")} />
-            {errors.height && (
-              <p className="text-sm text-destructive">{errors.height.message}</p>
-            )}
-          </div>
-          <Button type="submit" className="w-full">
+          <Button type="submit" size="sm" className="w-full">
             Aplicar
           </Button>
         </form>

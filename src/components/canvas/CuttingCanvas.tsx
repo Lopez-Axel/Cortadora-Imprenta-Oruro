@@ -1,6 +1,7 @@
 "use client"
 
 import type { KonvaEventObject } from "konva/lib/Node"
+import type { Stage as StageType } from "konva/lib/Stage"
 import { useMemo, useState, useCallback } from "react"
 import { Stage, Layer, Rect, Text, Group, Arrow } from "react-konva"
 import { LayoutResult, FreeRect } from "@/lib/models/types"
@@ -13,6 +14,7 @@ type CuttingCanvasProps = {
   maxSize?: number
   compact?: boolean
   showDebug?: boolean
+  stageRef?: React.RefObject<StageType | null>
 }
 
 const COLORS = [
@@ -106,6 +108,7 @@ export function CuttingCanvas({
   maxSize = 260,
   compact = false,
   showDebug = false,
+  stageRef,
 }: CuttingCanvasProps) {
   const [tooltip, setTooltip] = useState<{
     x: number
@@ -191,7 +194,11 @@ export function CuttingCanvas({
 
   return (
     <div className="relative overflow-hidden">
-      <Stage width={stageWidth} height={stageHeight}>
+      <Stage
+        width={stageWidth}
+        height={stageHeight}
+        ref={stageRef}
+      >
         <Layer>
           {/* Gray background (outside sheet) */}
           <Rect
@@ -266,13 +273,23 @@ export function CuttingCanvas({
                   />
                 )}
                 {placement.rotated && !compact && (
-                  <Text
-                    x={x + 2}
-                    y={y + (Math.min(w, h) > 60 ? 14 : 10)}
-                    text="⟳"
-                    fontSize={8}
-                    fill="rgba(255,255,255,0.8)"
-                  />
+                  <>
+                    <Rect
+                      x={x}
+                      y={y}
+                      width={Math.max(w, 0.5)}
+                      height={Math.max(h, 0.5)}
+                      fill="#22c55e"
+                      opacity={0.2}
+                    />
+                    <Text
+                      x={x + 2}
+                      y={y + (Math.min(w, h) > 60 ? 14 : 10)}
+                      text="⟳"
+                      fontSize={8}
+                      fill="rgba(255,255,255,0.9)"
+                    />
+                  </>
                 )}
                 {showDebug && (
                   <Text

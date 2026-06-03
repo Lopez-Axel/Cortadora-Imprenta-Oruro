@@ -1,6 +1,7 @@
 "use client"
 
 import Decimal from "decimal.js"
+import { useState } from "react"
 import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -17,7 +18,7 @@ import {
 } from "@/components/ui/card"
 import { useCuttingStore } from "@/lib/store/cutting-store"
 import { Piece } from "@/lib/models/types"
-import { Pencil, X } from "lucide-react"
+import { Pencil, X, Maximize2 } from "lucide-react"
 
 type PieceFormValues = {
   width: number
@@ -36,14 +37,15 @@ export function PieceForm() {
 
   const editingPiece = editingPieceId ? pieces.find((p) => p.id === editingPieceId) ?? null : null
 
-  const isSingleType = pieces.length === 1
+  const canBeUnlimited = pieces.length <= 1
+  const [maxMode, setMaxMode] = useState(canBeUnlimited)
 
   const pieceSchema = z.object({
-    width: z.coerce.number().min(1, "El ancho debe ser mayor a 0"),
-    height: z.coerce.number().min(1, "El alto debe ser mayor a 0"),
-    quantity: isSingleType
-      ? z.coerce.number().min(0).optional().default(1)
-      : z.coerce.number().min(1, "La cantidad debe ser mayor a 0"),
+    width: z.coerce.number().min(1, "Debe ser mayor a 0"),
+    height: z.coerce.number().min(1, "Debe ser mayor a 0"),
+    quantity: canBeUnlimited && maxMode
+      ? z.coerce.number().optional().default(0)
+      : z.coerce.number().min(1, "Debe ser mayor a 0"),
     allowRotation: z.boolean().default(true),
   })
 
@@ -60,16 +62,18 @@ export function PieceForm() {
     defaultValues: {
       width: 0,
       height: 0,
-      quantity: 1,
+      quantity: 0,
       allowRotation: true,
     },
   })
 
   const startEdit = (piece: Piece) => {
+    const hasQty = piece.quantity !== undefined
     setEditingPieceId(piece.id)
+    setMaxMode(!hasQty)
     setValue("width", piece.width.toNumber())
     setValue("height", piece.height.toNumber())
-    setValue("quantity", piece.quantity ?? 1)
+    setValue("quantity", piece.quantity ?? 0)
     setValue("allowRotation", piece.allowRotation)
   }
 
@@ -79,44 +83,45 @@ export function PieceForm() {
   }
 
   const onSubmit = (data: PieceFormValues) => {
+    const qty = (canBeUnlimited && maxMode) ? undefined : (data.quantity || undefined)
     if (editingPieceId && editingPiece) {
       updatePiece(editingPieceId, {
         width: new Decimal(data.width),
         height: new Decimal(data.height),
-        quantity: data.quantity || undefined,
+        quantity: qty,
         allowRotation: data.allowRotation,
       })
       setEditingPieceId(null)
     } else {
-      const newPiece: Piece = {
+      addPiece({
         id: uuid(),
         width: new Decimal(data.width),
         height: new Decimal(data.height),
-        quantity: isSingleType && data.quantity === 0 ? undefined : data.quantity || undefined,
+        quantity: qty,
         allowRotation: data.allowRotation,
-      }
-      addPiece(newPiece)
+      })
     }
-    reset({ width: 0, height: 0, quantity: 1, allowRotation: true })
+    reset({ width: 0, height: 0, quantity: 0, allowRotation: true })
+    if (canBeUnlimited) setMaxMode(true)
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">
           {editingPiece ? "Editar Pieza" : "Piezas"}
         </CardTitle>
         <CardDescription>
           {editingPiece
-            ? `Editando ${editingPiece.width}x${editingPiece.height}mm`
+            ? `${editingPiece.width.toString()}×${editingPiece.height.toString()}`
             : "Agrega las piezas a cortar"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="piece-width">Ancho (mm)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="piece-width">Ancho</Label>
               <Input
                 id="piece-width"
                 type="number"
@@ -124,11 +129,11 @@ export function PieceForm() {
                 {...register("width")}
               />
               {errors.width && (
-                <p className="text-sm text-destructive">{errors.width.message}</p>
+                <p className="text-xs text-destructive">{errors.width.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="piece-height">Alto (mm)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="piece-height">Alto</Label>
               <Input
                 id="piece-height"
                 type="number"
@@ -136,50 +141,60 @@ export function PieceForm() {
                 {...register("height")}
               />
               {errors.height && (
-                <p className="text-sm text-destructive">{errors.height.message}</p>
+                <p className="text-xs text-destructive">{errors.height.message}</p>
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="piece-quantity">
-                Cantidad
-                {isSingleType && (
-                  <span className="text-xs text-muted-foreground ml-1">
-                    (opcional)
-                  </span>
-                )}
-              </Label>
+
+          {canBeUnlimited && (
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={maxMode}
+                onChange={() => {
+                  setMaxMode(!maxMode)
+                  if (!maxMode) setValue("quantity", 0)
+                }}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Buscar máximo aprovechamiento</span>
+            </label>
+          )}
+
+          {(!canBeUnlimited || !maxMode) && (
+            <div className="space-y-1.5">
+              <Label htmlFor="piece-quantity">Cantidad</Label>
               <Input
                 id="piece-quantity"
                 type="number"
-                min={isSingleType ? "0" : "1"}
+                min="1"
                 {...register("quantity")}
               />
               {errors.quantity && (
-                <p className="text-sm text-destructive">
-                  {errors.quantity.message}
-                </p>
+                <p className="text-xs text-destructive">{errors.quantity.message}</p>
               )}
             </div>
-            <div className="space-y-2 flex items-end pb-2">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  {...register("allowRotation")}
-                  className="h-4 w-4"
-                />
-                Rotación
-              </label>
-            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                defaultChecked
+                {...register("allowRotation")}
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              />
+              Rotación permitida
+            </label>
           </div>
+
           <div className="flex gap-2">
-            <Button type="submit" variant="secondary" className="flex-1">
-              {editingPiece ? "Guardar Cambios" : "Agregar Pieza"}
+            <Button type="submit" variant="secondary" size="sm" className="flex-1">
+              {editingPiece ? "Guardar" : "Agregar"}
             </Button>
             {editingPiece && (
-              <Button type="button" variant="ghost" onClick={cancelEdit}>
+              <Button type="button" variant="ghost" size="sm" onClick={cancelEdit}>
                 Cancelar
               </Button>
             )}
@@ -187,37 +202,43 @@ export function PieceForm() {
         </form>
 
         {pieces.length > 0 && (
-          <div className="space-y-2 pt-2 border-t">
-            <p className="text-sm font-medium">
+          <div className="space-y-2 pt-3 border-t border-border">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Piezas ({pieces.length})
             </p>
             <div className="max-h-48 overflow-y-auto space-y-1">
               {pieces.map((p) => (
                 <div
                   key={p.id}
-                  className={`flex items-center justify-between text-sm rounded px-2 py-1 ${
-                    editingPieceId === p.id ? "bg-primary/10 ring-1 ring-primary" : "bg-muted"
+                  className={`flex items-center justify-between text-sm rounded-lg px-3 py-2 transition-colors duration-200 ${
+                    editingPieceId === p.id
+                      ? "bg-primary/5 ring-1 ring-primary"
+                      : "bg-muted hover:bg-accent"
                   }`}
                 >
-                  <span className="truncate flex-1">
-                    {p.width.toString()}x{p.height.toString()}mm
-                    {p.quantity !== undefined ? ` x${p.quantity}` : ""}
-                    {p.allowRotation && " ⟳"}
+                  <span className="truncate flex-1 text-sm font-medium">
+                    {p.width.toString()}×{p.height.toString()}
+                    {p.quantity !== undefined ? ` ×${p.quantity}` : ""}
+                    {p.allowRotation && (
+                      <span className="text-muted-foreground ml-1 text-xs">⟳</span>
+                    )}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => startEdit(p)}
-                    className="text-muted-foreground hover:text-primary ml-1 shrink-0"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removePiece(p.id)}
-                    className="text-muted-foreground hover:text-destructive ml-1 shrink-0"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex gap-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(p)}
+                      className="text-muted-foreground hover:text-primary p-1 rounded transition-colors duration-200"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removePiece(p.id)}
+                      className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors duration-200"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
