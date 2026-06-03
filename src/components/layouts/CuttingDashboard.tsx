@@ -1,6 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import { useState } from "react"
 import { useCuttingEngine } from "@/lib/hooks/useCuttingEngine"
 import { useCuttingStore } from "@/lib/store/cutting-store"
 import { SheetForm } from "@/components/forms/SheetForm"
@@ -9,8 +10,7 @@ import { StrategyComparison } from "@/components/comparison/StrategyComparison"
 import { MetricsCard } from "@/components/metrics/MetricsCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { RotateCcw } from "lucide-react"
-import { LayoutResult } from "@/lib/models/types"
+import { RotateCcw, Bug } from "lucide-react"
 
 const CuttingCanvas = dynamic(
   () => import("@/components/canvas/CuttingCanvas").then((m) => ({ default: m.CuttingCanvas })),
@@ -19,10 +19,14 @@ const CuttingCanvas = dynamic(
 
 function StrategyCard({
   result,
+  sheetWidth,
+  sheetHeight,
   totalRequested,
   isBest,
 }: {
-  result: LayoutResult
+  result: import("@/lib/models/types").LayoutResult
+  sheetWidth: import("decimal.js").default
+  sheetHeight: import("decimal.js").default
   totalRequested: number
   isBest: boolean
 }) {
@@ -38,7 +42,13 @@ function StrategyCard({
       </CardHeader>
       <CardContent className="p-3 space-y-3">
         <div className="flex justify-center bg-muted/30 rounded-lg p-2">
-          <CuttingCanvas result={result} maxSize={260} compact />
+          <CuttingCanvas
+            result={result}
+            sheetWidth={sheetWidth}
+            sheetHeight={sheetHeight}
+            maxSize={260}
+            compact
+          />
         </div>
         <MetricsCard
           result={result}
@@ -61,7 +71,11 @@ export function CuttingDashboard() {
   const sheet = useCuttingStore((s) => s.sheet)
   const reset = useCuttingStore((s) => s.reset)
 
+  const [showDebug, setShowDebug] = useState(false)
+
   const hasPieces = pieces.length > 0
+
+  const totalArea = sheet.width.mul(sheet.height)
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 p-4 lg:p-6 flex-1">
@@ -74,7 +88,11 @@ export function CuttingDashboard() {
             <div className="text-xs text-muted-foreground space-y-1">
               <div className="flex justify-between">
                 <span>Pliego:</span>
-                <span>{sheet.width.toString()}x{sheet.height.toString()}mm</span>
+                <span>{sheet.width.toString()} × {sheet.height.toString()} mm</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Área:</span>
+                <span>{totalArea.toString()} mm²</span>
               </div>
               <div className="flex justify-between">
                 <span>Piezas solicitadas:</span>
@@ -114,6 +132,8 @@ export function CuttingDashboard() {
                 <StrategyCard
                   key={result.strategy}
                   result={result}
+                  sheetWidth={sheet.width}
+                  sheetHeight={sheet.height}
                   totalRequested={totalPiecesRequested}
                   isBest={bestResult !== null && result.strategy === bestResult.strategy}
                 />
@@ -122,14 +142,34 @@ export function CuttingDashboard() {
 
             {bestResult && (
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">
-                    Vista general — {bestResult.strategy}
-                  </CardTitle>
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm">
+                      Vista general — {bestResult.strategy}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Pliego: {sheet.width.toString()} × {sheet.height.toString()} mm &nbsp;|&nbsp; Área: {totalArea.toString()} mm²
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={() => setShowDebug(!showDebug)}
+                  >
+                    <Bug className="h-3.5 w-3.5" />
+                    {showDebug ? "Ocultar coordenadas" : "Mostrar coordenadas"}
+                  </Button>
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="flex justify-center">
-                    <CuttingCanvas result={bestResult} maxSize={500} />
+                    <CuttingCanvas
+                      result={bestResult}
+                      sheetWidth={sheet.width}
+                      sheetHeight={sheet.height}
+                      maxSize={500}
+                      showDebug={showDebug}
+                    />
                   </div>
                 </CardContent>
               </Card>
