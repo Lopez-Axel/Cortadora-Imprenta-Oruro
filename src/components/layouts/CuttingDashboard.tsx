@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic"
 import type { Stage as StageType } from "konva/lib/Stage"
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useLayoutEffect } from "react"
 import { useCuttingEngine } from "@/lib/hooks/useCuttingEngine"
 import { useCuttingStore } from "@/lib/store/cutting-store"
 import { SheetForm } from "@/components/forms/SheetForm"
@@ -45,6 +45,21 @@ function CanvasSection({
   maximized?: boolean
 }) {
   const isViewingBest = result?.strategy === bestResult?.strategy
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    setContainerWidth(el.clientWidth)
+    const ro = new ResizeObserver((entries) => {
+      setContainerWidth(entries[0]?.contentRect.width ?? 0)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const canvasMaxSize = maximized ? 900 : (containerWidth > 0 ? containerWidth : 500)
 
   return (
     <div className={`relative rounded-xl overflow-hidden bg-white border border-slate-200 shadow-lg ${
@@ -88,13 +103,16 @@ function CanvasSection({
         </div>
       </div>
 
-      <div className={`flex items-center justify-center bg-[#F8FAFC] overflow-hidden ${maximized ? "h-[calc(100%-40px)]" : "w-full min-h-[350px] max-h-[500px] lg:min-h-[500px] lg:max-h-none"}`}>
+      <div
+        ref={containerRef}
+        className={`flex items-center justify-center bg-[#F8FAFC] overflow-x-auto overflow-y-hidden ${maximized ? "h-[calc(100%-40px)]" : "w-full min-h-[350px] max-h-[500px] lg:min-h-[500px] lg:max-h-none"}`}
+      >
         {result && result.placements.length > 0 ? (
           <CuttingCanvas
             result={result}
             sheetWidth={sheet.width}
             sheetHeight={sheet.height}
-            maxSize={maximized ? 900 : 500}
+            maxSize={canvasMaxSize}
             showDebug={showDebug}
             stageRef={stageRef}
           />
