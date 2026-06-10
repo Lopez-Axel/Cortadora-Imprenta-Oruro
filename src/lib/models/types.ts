@@ -58,6 +58,7 @@ export type CandidateLayout = {
   wasteArea: Decimal
   efficiency: Decimal
   totalPiecesPlaced: number
+  hasOverlap?: boolean
 }
 
 export type EngineResult = {

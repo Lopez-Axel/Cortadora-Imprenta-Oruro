@@ -301,7 +301,22 @@ export function generateLayouts(
     return b.totalPiecesPlaced - a.totalPiecesPlaced
   })
 
-  return { theoreticalMax, candidates: deduped }
+  function hasOverlap(placements: Placement[]): boolean {
+    for (let i = 0; i < placements.length; i++) {
+      for (let j = i + 1; j < placements.length; j++) {
+        const a = placements[i]
+        const b = placements[j]
+        const overlapX = a.x.lt(b.x.add(b.width)) && a.x.add(a.width).gt(b.x)
+        const overlapY = a.y.lt(b.y.add(b.height)) && a.y.add(a.height).gt(b.y)
+        if (overlapX && overlapY) return true
+      }
+    }
+    return false
+  }
+
+  const valid = deduped.filter((c) => !hasOverlap(c.placements))
+
+  return { theoreticalMax, candidates: valid }
 }
 
 export function pickBest(candidates: CandidateLayout[]): CandidateLayout | null {

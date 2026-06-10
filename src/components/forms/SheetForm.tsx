@@ -1,74 +1,60 @@
 "use client"
 
 import Decimal from "decimal.js"
-import { useForm, type Resolver } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Button } from "@/components/ui/button"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCuttingStore } from "@/lib/store/cutting-store"
 
-const sheetSchema = z.object({
-  width: z.coerce.number().min(1, "Debe ser mayor a 0"),
-  height: z.coerce.number().min(1, "Debe ser mayor a 0"),
-})
-
-type SheetFormValues = {
-  width: number
-  height: number
-}
-
-const resolver = zodResolver(sheetSchema) as Resolver<SheetFormValues>
-
 export function SheetForm() {
   const sheet = useCuttingStore((s) => s.sheet)
   const setSheet = useCuttingStore((s) => s.setSheet)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SheetFormValues>({
-    resolver,
-    defaultValues: { width: sheet.width.toNumber(), height: sheet.height.toNumber() },
-  })
+  const [width, setWidth] = useState(sheet.width.toNumber().toString())
+  const [height, setHeight] = useState(sheet.height.toNumber().toString())
 
-  const onSubmit = (data: SheetFormValues) => {
+  const commit = (field: "width" | "height", raw: string) => {
+    const val = parseFloat(raw)
+    if (!raw || isNaN(val) || val <= 0) return
     setSheet({
-      width: new Decimal(data.width),
-      height: new Decimal(data.height),
+      width: field === "width" ? new Decimal(val) : sheet.width,
+      height: field === "height" ? new Decimal(val) : sheet.height,
     })
   }
 
   return (
-    <Card>
+    <Card key={`${sheet.width}-${sheet.height}`}>
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Material</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="width">Ancho</Label>
-              <Input id="width" type="number" step="any" placeholder="Ej: 100" {...register("width")} />
-              {errors.width && (
-                <p className="text-xs text-destructive">{errors.width.message}</p>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="height">Alto</Label>
-              <Input id="height" type="number" step="any" placeholder="Ej: 100" {...register("height")} />
-              {errors.height && (
-                <p className="text-xs text-destructive">{errors.height.message}</p>
-              )}
-            </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="width">Ancho</Label>
+            <Input
+              id="width"
+              type="number"
+              step="any"
+              placeholder="Ej: 100"
+              value={width}
+              onChange={(e) => setWidth(e.target.value)}
+              onBlur={(e) => commit("width", e.target.value)}
+            />
           </div>
-          <Button type="submit" size="sm" className="w-full min-h-11">
-            Aplicar
-          </Button>
-        </form>
+          <div className="space-y-1.5">
+            <Label htmlFor="height">Alto</Label>
+            <Input
+              id="height"
+              type="number"
+              step="any"
+              placeholder="Ej: 100"
+              value={height}
+              onChange={(e) => setHeight(e.target.value)}
+              onBlur={(e) => commit("height", e.target.value)}
+            />
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

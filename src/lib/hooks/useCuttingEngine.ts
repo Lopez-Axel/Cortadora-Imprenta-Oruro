@@ -9,11 +9,12 @@ export function useCuttingEngine() {
   const sheet = useCuttingStore((s) => s.sheet)
   const pieces = useCuttingStore((s) => s.pieces)
   const settings = useCuttingStore((s) => s.settings)
+  const calculated = useCuttingStore((s) => s.calculated)
 
   const engineResult = useMemo((): EngineResult => {
-    if (pieces.length === 0) return { theoreticalMax: 0, candidates: [] }
+    if (!calculated || pieces.length === 0) return { theoreticalMax: 0, candidates: [] }
     return generateLayouts(sheet, pieces, settings)
-  }, [sheet, pieces, settings])
+  }, [calculated, sheet, pieces, settings])
 
   const allResults = engineResult.candidates
 

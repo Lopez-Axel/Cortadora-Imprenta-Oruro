@@ -1,7 +1,5 @@
 "use client"
 
-import dynamic from "next/dynamic"
-import type { Stage as StageType } from "konva/lib/Stage"
 import { useState, useCallback, useRef, useLayoutEffect } from "react"
 import { useCuttingEngine } from "@/lib/hooks/useCuttingEngine"
 import { useCuttingStore } from "@/lib/store/cutting-store"
@@ -15,11 +13,7 @@ import {
   AlertTriangle, Ruler, Info, Settings, ChevronDown,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-
-const CuttingCanvas = dynamic(
-  () => import("@/components/canvas/CuttingCanvas").then((m) => ({ default: m.CuttingCanvas })),
-  { ssr: false }
-)
+import { CuttingCanvas } from "@/components/canvas/CuttingCanvas"
 
 function CanvasSection({
   result,
@@ -28,7 +22,7 @@ function CanvasSection({
   showDebug,
   setShowDebug,
   setFullscreen,
-  stageRef,
+  canvasRef,
   handleExport,
   handleShare,
   maximized = false,
@@ -39,7 +33,7 @@ function CanvasSection({
   showDebug: boolean
   setShowDebug: (v: boolean) => void
   setFullscreen: (v: boolean) => void
-  stageRef: import("react").MutableRefObject<StageType | null>
+  canvasRef: import("react").RefObject<HTMLCanvasElement | null>
   handleExport: () => void
   handleShare: () => void
   maximized?: boolean
@@ -114,7 +108,7 @@ function CanvasSection({
             sheetHeight={sheet.height}
             maxSize={canvasMaxSize}
             showDebug={showDebug}
-            stageRef={stageRef}
+            canvasRef={canvasRef}
           />
         ) : (
           <div className="text-sm text-muted-foreground">Sin resultados</div>
@@ -171,14 +165,19 @@ export function CuttingDashboard() {
   } = useCuttingEngine()
 
   const sheet = useCuttingStore((s) => s.sheet)
+  const setCalculated = useCuttingStore((s) => s.setCalculated)
   const reset = useCuttingStore((s) => s.reset)
 
   const [showDebug, setShowDebug] = useState(false)
+  const [showDetails, setShowDetails] = useState(true)
   const [activeStrategy, setActiveStrategy] = useState<string | null>(null)
+  const [lastCalculatedKey, setLastCalculatedKey] = useState<string | null>(null)
+
+  const currentKey = `${sheet.width}_${sheet.height}_${pieces.map(p => `${p.id}_${p.width}_${p.height}_${p.quantity}`).join("|")}`
   const [fullscreen, setFullscreen] = useState(false)
   const [mobileFormOpen, setMobileFormOpen] = useState(true)
 
-  const stageRef = useRef<StageType | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
   const activeResult = activeStrategy
     ? allResults.find((r) => r.strategy === activeStrategy) ?? null
@@ -190,35 +189,46 @@ export function CuttingDashboard() {
   const theoreticalMax = engineResult.theoreticalMax
   const bestCount = bestResult?.totalPiecesPlaced ?? 0
 
+  const handleCalculate = () => {
+    setCalculated(true)
+    setLastCalculatedKey(currentKey)
+  }
+
+  const handleReset = () => {
+    reset()
+    setLastCalculatedKey(null)
+  }
+
   const handleSelectStrategy = useCallback((strategy: string) => {
     setActiveStrategy((prev) => (prev === strategy ? null : strategy))
   }, [])
 
   const handleExport = useCallback(async () => {
-    const stage = stageRef.current
-    if (!stage) return
-    const dataUrl = stage.toDataURL({ pixelRatio: 2 })
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const dataUrl = canvas.toDataURL("image/png")
     const link = document.createElement("a")
     link.download = `corte-${sheet.width}x${sheet.height}-${activeResult?.strategy ?? "mejor"}.png`
     link.href = dataUrl
     link.click()
-  }, [sheet, activeResult])
+  }, [sheet, activeResult, canvasRef])
 
   const handleShare = useCallback(async () => {
-    const stage = stageRef.current
-    if (!stage) return
-    const dataUrl = stage.toDataURL({ pixelRatio: 2 })
-    const blob = await (await fetch(dataUrl)).blob()
-    const file = new File([blob], `corte-${activeResult?.strategy ?? "mejor"}.png`, { type: "image/png" })
-    if (navigator.share) {
-      navigator.share({
-        title: "Optimización de Corte",
-        text: `${activeResult?.strategy}: ${activeResult?.totalPiecesPlaced} piezas, ${activeResult?.efficiency.toFixed(1)}% aprovechamiento`,
-        files: [file],
-      })
-    } else {
-      handleExport()
-    }
+    const canvas = canvasRef.current
+    if (!canvas) return
+    canvas.toBlob(async (blob) => {
+      if (!blob) return
+      const file = new File([blob], `corte-${activeResult?.strategy ?? "mejor"}.png`, { type: "image/png" })
+      if (navigator.share) {
+        navigator.share({
+          title: "Optimización de Corte",
+          text: `${activeResult?.strategy}: ${activeResult?.totalPiecesPlaced} piezas, ${activeResult?.efficiency.toFixed(1)}% aprovechamiento`,
+          files: [file],
+        })
+      } else {
+        handleExport()
+      }
+    }, "image/png")
   }, [activeResult, handleExport])
 
   return (
@@ -240,6 +250,19 @@ export function CuttingDashboard() {
           <div className="px-4 pb-4 space-y-4">
             <SheetForm />
             <PieceForm />
+            {pieces.length > 0 && sheet.width.gt(0) && sheet.height.gt(0) && (
+              <Button
+                onClick={handleCalculate}
+                disabled={lastCalculatedKey === currentKey}
+                className="w-full gap-2 min-h-11"
+              >
+                {lastCalculatedKey === null
+                  ? "Calcular"
+                  : lastCalculatedKey !== currentKey
+                    ? "Recalcular"
+                    : "Calculado"}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -249,6 +272,20 @@ export function CuttingDashboard() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             <SheetForm />
             <PieceForm />
+
+            {pieces.length > 0 && sheet.width.gt(0) && sheet.height.gt(0) && (
+              <Button
+                onClick={handleCalculate}
+                disabled={lastCalculatedKey === currentKey}
+                className="w-full gap-2 min-h-11"
+              >
+                {lastCalculatedKey === null
+                  ? "Calcular"
+                  : lastCalculatedKey !== currentKey
+                    ? "Recalcular"
+                    : "Calculado"}
+              </Button>
+            )}
 
             {hasPieces && (
               <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -274,7 +311,7 @@ export function CuttingDashboard() {
                 </div>
 
                 <Button
-                  onClick={reset}
+                  onClick={handleReset}
                   variant="ghost"
                   size="sm"
                   className="w-full gap-2 text-slate-500 min-h-11"
@@ -325,7 +362,7 @@ export function CuttingDashboard() {
                   )}
                 </div>
                 <Button
-                  onClick={reset}
+                  onClick={handleReset}
                   variant="ghost"
                   size="sm"
                   className="w-full gap-2 text-slate-500 min-h-11"
@@ -335,12 +372,26 @@ export function CuttingDashboard() {
                 </Button>
               </div>
 
-              <DashboardMetrics
-                theoreticalMax={theoreticalMax}
-                bestCount={bestCount}
-                efficiency={bestResult?.efficiency.toFixed(1) ?? "0"}
-                waste={`${bestResult?.wasteArea.toFixed(0) ?? "0"} (${(100 - (bestResult?.efficiency.toNumber() ?? 0)).toFixed(1)}%)`}
-              />
+              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="flex items-center justify-between w-full px-4 py-2.5 text-sm font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 transition-colors min-h-11"
+                >
+                  <span>Ver detalles</span>
+                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${showDetails ? "rotate-180" : ""}`} />
+                </button>
+                {showDetails && (
+                  <div className="p-4">
+                    <DashboardMetrics
+                      theoreticalMax={theoreticalMax}
+                      bestCount={bestCount}
+                      efficiency={bestResult?.efficiency.toFixed(1) ?? "0"}
+                      waste={`${bestResult?.wasteArea.toFixed(0) ?? "0"} (${(100 - (bestResult?.efficiency.toNumber() ?? 0)).toFixed(1)}%)`}
+                    />
+                  </div>
+                )}
+              </div>
 
               <CanvasSection
                 result={activeResult}
@@ -349,7 +400,7 @@ export function CuttingDashboard() {
                 showDebug={showDebug}
                 setShowDebug={setShowDebug}
                 setFullscreen={setFullscreen}
-                stageRef={stageRef}
+                canvasRef={canvasRef}
                 handleExport={handleExport}
                 handleShare={handleShare}
               />
@@ -402,7 +453,7 @@ export function CuttingDashboard() {
                 sheetHeight={sheet.height}
                 maxSize={900}
                 showDebug={showDebug}
-                stageRef={stageRef}
+                canvasRef={canvasRef}
               />
             </div>
           </div>
