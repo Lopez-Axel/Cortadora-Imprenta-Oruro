@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "Optimizador de Cortes — Imprenta",
   description:
     "Aplicación para optimización y visualización de cortes de materiales rectangulares",
+  manifest: "/manifest.webmanifest",
 }
 
 export default function RootLayout({

@@ -10,10 +10,11 @@ import { DashboardMetrics } from "@/components/metrics/MetricsCard"
 import { Button } from "@/components/ui/button"
 import {
   RotateCcw, Bug, Maximize2, Minimize2, Download, Share2,
-  AlertTriangle, Ruler, Info, Settings, ChevronDown,
+  AlertTriangle, Ruler, Info, Settings, ChevronDown, MonitorDown,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { CuttingCanvas } from "@/components/canvas/CuttingCanvas"
+import { useInstallPrompt } from "@/hooks/useInstallPrompt"
 
 function CanvasSection({
   result,
@@ -189,6 +190,8 @@ export function CuttingDashboard() {
   const theoreticalMax = engineResult.theoreticalMax
   const bestCount = bestResult?.totalPiecesPlaced ?? 0
 
+  const { canInstall, isInstalled, install } = useInstallPrompt()
+
   const handleCalculate = () => {
     setCalculated(true)
     setLastCalculatedKey(currentKey)
@@ -263,6 +266,20 @@ export function CuttingDashboard() {
                     : "Calculado"}
               </Button>
             )}
+            {canInstall && (
+              <Button
+                onClick={install}
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 min-h-11 text-slate-600"
+              >
+                <MonitorDown className="h-4 w-4" />
+                Instalar app
+              </Button>
+            )}
+            {isInstalled && (
+              <p className="text-xs text-center text-slate-400">App instalada</p>
+            )}
           </div>
         )}
       </div>
@@ -320,6 +337,21 @@ export function CuttingDashboard() {
                   Reiniciar
                 </Button>
               </div>
+            )}
+
+            {canInstall && (
+              <Button
+                onClick={install}
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 min-h-11 text-slate-600"
+              >
+                <MonitorDown className="h-4 w-4" />
+                Instalar app
+              </Button>
+            )}
+            {isInstalled && (
+              <p className="text-xs text-center text-slate-400">App instalada</p>
             )}
           </div>
         </div>
